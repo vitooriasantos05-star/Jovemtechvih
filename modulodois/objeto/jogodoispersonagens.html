@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Perseguição</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eee8ff;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #7041a6;
+        }
+
+        canvas {
+            background: white;
+            border: 3px solid #9673d8;
+            border-radius: 15px;
+            max-width: 100%;
+        }
+
+        button {
+            background: #7041a6;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background: #502c7c;
+        }
+
+        p {
+            color: #444;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🏃 Jogo da Perseguição</h1>
+
+    <p>O roxo persegue o laranja. Será que vai conseguir?</p>
+
+    <canvas id="jogo" width="700" height="380"></canvas>
+
+    <br>
+
+    <button onclick="reiniciarJogo()">Reiniciar jogo</button>
+
+    <script>
+
+        // CLASSE PRINCIPAL (ABSTRAÇÃO)
+
+        class Personagem {
+
+            #x;
+            #y;
+            #velocidade;
+
+            constructor(nome, x, y, velocidade, cor) {
+
+                if (new.target === Personagem) {
+                    throw new Error("Personagem é uma classe abstrata!");
+                }
+
+                this.nome = nome;
+                this.#x = x;
+                this.#y = y;
+                this.#velocidade = velocidade;
+                this.cor = cor;
+
+            }
+
+            // ACESSO CONTROLADO AOS DADOS (ENCAPSULAMENTO)
+
+            get x() {
+                return this.#x;
+            }
+
+            get y() {
+                return this.#y;
+            }
+
+            moverPara(destinoX, destinoY, tempo) {
+
+                let dx = destinoX - this.#x;
+                let dy = destinoY - this.#y;
+
+                let distancia = Math.hypot(dx, dy);
+
+                if (distancia > 0) {
+
+                    let passo = Math.min(
+                        this.#velocidade * tempo,
+                        distancia
+                    );
+
+                    this.#x += (dx / distancia) * passo;
+                    this.#y += (dy / distancia) * passo;
+
+                }
+
+            }
+
+            desenhar(ctx) {
+                throw new Error("Método deve ser implementado!");
+            }
+
+        }
+
+
+        // HERANÇA: PERSONAGEM FUGITIVO
+
+        class Fugitivo extends Personagem {
+
+            constructor() {
+                super("Fugitivo", 560, 190, 110, "#ff914d");
+            }
+
+            atualizar(tempo) {
+
+                let destinoX = 560 + Math.sin(tempo * 0.001) * 65;
+                let destinoY = 190 + Math.cos(tempo * 0.0015) * 90;
+
+                this.moverPara(destinoX, destinoY, 0.016);
+
+            }
+
+            desenhar(ctx) {
+
+                ctx.fillStyle = this.cor;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 18, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = "white";
+                ctx.font = "22px Arial";
+                ctx.fillText("😎", this.x - 13, this.y + 7);
+
+            }
+
+        }
+
+
+        // HERANÇA: PERSONAGEM PERSEGUIDOR
+
+        class Perseguidor extends Personagem {
+
+            constructor() {
+                super("Perseguidor", 100, 190, 150, "#9673d8");
+            }
+
+            atualizar(alvo) {
+
+                this.moverPara(alvo.x, alvo.y, 0.016);
+
+            }
+
+            desenhar(ctx) {
+
+                ctx.fillStyle = this.cor;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 18, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = "white";
+                ctx.font = "22px Arial";
+                ctx.fillText("🏃", this.x - 13, this.y + 7);
+
+            }
+
+        }
+
+
+        // CONFIGURAÇÃO DO JOGO
+
+        const canvas = document.getElementById("jogo");
+        const ctx = canvas.getContext("2d");
+
+        let fugitivo;
+        let perseguidor;
+
+        let executando = true;
+        let ultimoTempo = 0;
+
+
+        function reiniciarJogo() {
+
+            fugitivo = new Fugitivo();
+            perseguidor = new Perseguidor();
+
+            executando = true;
+            ultimoTempo = 0;
+
+            requestAnimationFrame(animar);
+
+        }
+
+
+        // POLIMORFISMO
+
+        function desenharPersonagem(personagem) {
+
+            personagem.desenhar(ctx);
+
+        }
+
+
+        // ANIMAÇÃO
+
+        function animar(tempo) {
+
+            if (!executando) return;
+
+            if (ultimoTempo === 0) {
+                ultimoTempo = tempo;
+            }
+
+            let delta = Math.min((tempo - ultimoTempo) / 1000, 0.05);
+
+            ultimoTempo = tempo;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            fugitivo.atualizar(tempo);
+            perseguidor.atualizar(fugitivo);
+
+            desenharPersonagem(fugitivo);
+            desenharPersonagem(perseguidor);
+
+            let distancia = Math.hypot(
+                fugitivo.x - perseguidor.x,
+                fugitivo.y - perseguidor.y
+            );
+
+            if (distancia < 36) {
+
+                ctx.fillStyle = "#7041a6";
+                ctx.font = "bold 25px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(
+                    "O perseguidor alcançou o fugitivo!",
+                    canvas.width / 2,
+                    40
+                );
+
+                executando = false;
+                return;
+
+            }
+
+            requestAnimationFrame(animar);
+
+        }
+
+
+        reiniciarJogo();
+
+    </script>
+
+</body>
+</html>
