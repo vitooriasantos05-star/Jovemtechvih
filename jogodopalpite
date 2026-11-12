@@ -1,0 +1,17 @@
+const prompt = require ('prompt-sync')(); 
+// o computador escolhe um número secreto entre 1 e 10
+const numeroSecreto = Math.floor(Math.random() * 10) + 1; 
+// o jogador insere um palpite
+let palpite = prompt ("Tente adivinhar o numero secreto entre 1 e 10;"); 
+// transforma o texto digitado em um numero inteiro
+palpite = parseInt (palpite);
+// logica do jogo utilizando estruturas IF para tomar decisoes 
+if (palpite === numeroSecreto) {
+    prompt ("Parabens! voce acertou o numero secreto!") ; 
+} else if (palpite > numeroSecreto){ 
+     prompt ("quase seu palpite foi maior que o numero secreto!") ; 
+} else if (palpite < numeroSecreto) {  
+    prompt ("Quase! Seu palpite foi menor que o numero secreto!") 
+} else {  
+    prompt ("entrada invalida. voce digitador um numero validoo?"); 
+ }

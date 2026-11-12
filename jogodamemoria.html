@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Memória</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eee8ff;
+            text-align: center;
+            margin: 0;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #7041a6;
+        }
+
+        .info {
+            font-size: 18px;
+            color: #444;
+            margin: 20px;
+        }
+
+        .tabuleiro {
+            display: grid;
+            grid-template-columns: repeat(4, 80px);
+            gap: 12px;
+            justify-content: center;
+            margin: 25px auto;
+        }
+
+        .carta {
+            width: 80px;
+            height: 80px;
+            background: #9673d8;
+            border-radius: 12px;
+            font-size: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .carta:hover {
+            transform: scale(1.05);
+        }
+
+        .carta.aberta {
+            background: white;
+        }
+
+        .carta.combinada {
+            background: #c5f5d1;
+            cursor: default;
+        }
+
+        button {
+            background: #7041a6;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #502c7c;
+        }
+
+        #mensagem {
+            color: #7041a6;
+            font-weight: bold;
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🧠 Jogo da Memória</h1>
+
+    <p>Encontre todos os pares de emojis!</p>
+
+    <div class="info">
+        Movimentos: <span id="movimentos">0</span>
+    </div>
+
+    <div class="tabuleiro" id="tabuleiro"></div>
+
+    <p id="mensagem"></p>
+
+    <button onclick="iniciarJogo()">Reiniciar jogo</button>
+
+    <script>
+
+        const emojis = [
+            "🍓", "🍓",
+            "🐱", "🐱",
+            "🌻", "🌻",
+            "💜", "💜",
+            "🍕", "🍕",
+            "⭐", "⭐"
+        ];
+
+        let primeiraCarta = null;
+        let segundaCarta = null;
+        let bloqueado = false;
+        let movimentos = 0;
+        let paresEncontrados = 0;
+
+        function iniciarJogo() {
+
+            const tabuleiro = document.getElementById("tabuleiro");
+
+            tabuleiro.innerHTML = "";
+
+            movimentos = 0;
+            paresEncontrados = 0;
+            primeiraCarta = null;
+            segundaCarta = null;
+            bloqueado = false;
+
+            document.getElementById("movimentos").innerText = 0;
+            document.getElementById("mensagem").innerText = "";
+
+            const cartas = [...emojis];
+
+            cartas.sort(() => Math.random() - 0.5);
+
+            cartas.forEach((emoji) => {
+
+                const carta = document.createElement("div");
+
+                carta.classList.add("carta");
+
+                carta.dataset.emoji = emoji;
+
+                carta.innerText = "?";
+
+                carta.addEventListener("click", () => virarCarta(carta));
+
+                tabuleiro.appendChild(carta);
+
+            });
+        }
+
+        function virarCarta(carta) {
+
+            if (bloqueado) return;
+
+            if (carta.classList.contains("aberta")) return;
+
+            if (carta.classList.contains("combinada")) return;
+
+            carta.innerText = carta.dataset.emoji;
+            carta.classList.add("aberta");
+
+            if (primeiraCarta === null) {
+
+                primeiraCarta = carta;
+
+            } else {
+
+                segundaCarta = carta;
+
+                movimentos++;
+
+                document.getElementById("movimentos").innerText = movimentos;
+
+                verificarPar();
+
+            }
+        }
+
+        function verificarPar() {
+
+            if (primeiraCarta.dataset.emoji === segundaCarta.dataset.emoji) {
+
+                primeiraCarta.classList.add("combinada");
+                segundaCarta.classList.add("combinada");
+
+                paresEncontrados++;
+
+                limparSelecao();
+
+                if (paresEncontrados === 6) {
+
+                    document.getElementById("mensagem").innerText =
+                        "🎉 Parabéns! Você venceu!";
+
+                }
+
+            } else {
+
+                bloqueado = true;
+
+                setTimeout(() => {
+
+                    primeiraCarta.innerText = "?";
+                    segundaCarta.innerText = "?";
+
+                    primeiraCarta.classList.remove("aberta");
+                    segundaCarta.classList.remove("aberta");
+
+                    limparSelecao();
+
+                }, 1000);
+
+            }
+        }
+
+        function limparSelecao() {
+
+            primeiraCarta = null;
+            segundaCarta = null;
+            bloqueado = false;
+
+        }
+
+        iniciarJogo();
+
+    </script>
+
+</body>
+</html>
